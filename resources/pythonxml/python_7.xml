@@ -1,0 +1,80 @@
+<ast>
+  <Module>
+    <body>
+      <ClassDef name="Foo" lineno="1" col_offset="0" end_lineno="3" end_col_offset="16">
+        <bases/>
+        <keywords/>
+        <body>
+          <FunctionDef name="foo" returns="None" type_comment="None" lineno="2" col_offset="4" end_lineno="3" end_col_offset="16">
+            <arguments vararg="None" kwarg="None">
+              <posonlyargs/>
+              <args/>
+              <kwonlyargs/>
+              <kw_defaults/>
+              <defaults/>
+            </arguments>
+            <body>
+              <Return lineno="3" col_offset="8" end_lineno="3" end_col_offset="16">
+                <Constant value="0" kind="None" lineno="3" col_offset="15" end_lineno="3" end_col_offset="16"/>
+              </Return>
+            </body>
+            <decorator_list/>
+          </FunctionDef>
+        </body>
+        <decorator_list/>
+      </ClassDef>
+      <ClassDef name="Baz" lineno="4" col_offset="0" end_lineno="6" end_col_offset="16">
+        <bases/>
+        <keywords/>
+        <body>
+          <FunctionDef name="baz" returns="None" type_comment="None" lineno="5" col_offset="4" end_lineno="6" end_col_offset="16">
+            <arguments vararg="None" kwarg="None">
+              <posonlyargs/>
+              <args/>
+              <kwonlyargs/>
+              <kw_defaults/>
+              <defaults/>
+            </arguments>
+            <body>
+              <Return lineno="6" col_offset="8" end_lineno="6" end_col_offset="16">
+                <Constant value="0" kind="None" lineno="6" col_offset="15" end_lineno="6" end_col_offset="16"/>
+              </Return>
+            </body>
+            <decorator_list/>
+          </FunctionDef>
+        </body>
+        <decorator_list/>
+      </ClassDef>
+      <ClassDef name="Bar" lineno="8" col_offset="0" end_lineno="10" end_col_offset="16">
+        <bases>
+          <Name id="Foo" lineno="8" col_offset="10" end_lineno="8" end_col_offset="13">
+            <Load/>
+          </Name>
+          <Name id="Baz" lineno="8" col_offset="15" end_lineno="8" end_col_offset="18">
+            <Load/>
+          </Name>
+        </bases>
+        <keywords/>
+        <body>
+          <FunctionDef name="bar" returns="None" type_comment="None" lineno="9" col_offset="4" end_lineno="10" end_col_offset="16">
+            <arguments vararg="None" kwarg="None">
+              <posonlyargs/>
+              <args/>
+              <kwonlyargs/>
+              <kw_defaults/>
+              <defaults/>
+            </arguments>
+            <body>
+              <Return lineno="10" col_offset="8" end_lineno="10" end_col_offset="16">
+                <Constant value="0" kind="None" lineno="10" col_offset="15" end_lineno="10" end_col_offset="16"/>
+              </Return>
+            </body>
+            <decorator_list/>
+          </FunctionDef>
+        </body>
+        <decorator_list/>
+      </ClassDef>
+    </body>
+    <type_ignores/>
+  </Module>
+</ast>

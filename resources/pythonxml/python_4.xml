@@ -1,0 +1,83 @@
+<ast>
+  <Module>
+    <body>
+      <FunctionDef name="A" returns="None" type_comment="None" lineno="1" col_offset="0" end_lineno="2" end_col_offset="14">
+        <arguments vararg="None" kwarg="None">
+          <posonlyargs/>
+          <args/>
+          <kwonlyargs/>
+          <kw_defaults/>
+          <defaults/>
+        </arguments>
+        <body>
+          <Expr lineno="2" col_offset="4" end_lineno="2" end_col_offset="14">
+            <Call lineno="2" col_offset="4" end_lineno="2" end_col_offset="14">
+              <Name id="print" lineno="2" col_offset="4" end_lineno="2" end_col_offset="9">
+                <Load/>
+              </Name>
+              <args>
+                <Constant value="A" kind="None" lineno="2" col_offset="10" end_lineno="2" end_col_offset="13"/>
+              </args>
+              <keywords/>
+            </Call>
+          </Expr>
+        </body>
+        <decorator_list/>
+      </FunctionDef>
+      <FunctionDef name="B" returns="None" type_comment="None" lineno="4" col_offset="0" end_lineno="6" end_col_offset="7">
+        <arguments vararg="None" kwarg="None">
+          <posonlyargs/>
+          <args/>
+          <kwonlyargs/>
+          <kw_defaults/>
+          <defaults/>
+        </arguments>
+        <body>
+          <Expr lineno="5" col_offset="4" end_lineno="5" end_col_offset="14">
+            <Call lineno="5" col_offset="4" end_lineno="5" end_col_offset="14">
+              <Name id="print" lineno="5" col_offset="4" end_lineno="5" end_col_offset="9">
+                <Load/>
+              </Name>
+              <args>
+                <Constant value="B" kind="None" lineno="5" col_offset="10" end_lineno="5" end_col_offset="13"/>
+              </args>
+              <keywords/>
+            </Call>
+          </Expr>
+          <Expr lineno="6" col_offset="4" end_lineno="6" end_col_offset="7">
+            <Call lineno="6" col_offset="4" end_lineno="6" end_col_offset="7">
+              <Name id="A" lineno="6" col_offset="4" end_lineno="6" end_col_offset="5">
+                <Load/>
+              </Name>
+              <args/>
+              <keywords/>
+            </Call>
+          </Expr>
+        </body>
+        <decorator_list/>
+      </FunctionDef>
+      <FunctionDef name="C" returns="None" type_comment="None" lineno="8" col_offset="0" end_lineno="9" end_col_offset="7">
+        <arguments vararg="None" kwarg="None">
+          <posonlyargs/>
+          <args/>
+          <kwonlyargs/>
+          <kw_defaults/>
+          <defaults/>
+        </arguments>
+        <body>
+          <Expr lineno="9" col_offset="4" end_lineno="9" end_col_offset="7">
+            <Call lineno="9" col_offset="4" end_lineno="9" end_col_offset="7">
+              <Name id="A" lineno="9" col_offset="4" end_lineno="9" end_col_offset="5">
+                <Load/>
+              </Name>
+              <args/>
+              <keywords/>
+            </Call>
+          </Expr>
+        </body>
+        <decorator_list/>
+      </FunctionDef>
+    </body>
+    <type_ignores/>
+  </Module>
+</ast>

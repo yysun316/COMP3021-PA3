@@ -1,0 +1,126 @@
+<ast>
+  <Module>
+    <body>
+      <FunctionDef name="baz" returns="None" type_comment="None" lineno="1" col_offset="0" end_lineno="2" end_col_offset="24">
+        <arguments vararg="None" kwarg="None">
+          <posonlyargs/>
+          <args/>
+          <kwonlyargs/>
+          <kw_defaults/>
+          <defaults/>
+        </arguments>
+        <body>
+          <Expr lineno="2" col_offset="4" end_lineno="2" end_col_offset="24">
+            <Call lineno="2" col_offset="4" end_lineno="2" end_col_offset="24">
+              <Name id="print" lineno="2" col_offset="4" end_lineno="2" end_col_offset="9">
+                <Load/>
+              </Name>
+              <args>
+                <Constant value="baz invoked" kind="None" lineno="2" col_offset="10" end_lineno="2" end_col_offset="23"/>
+              </args>
+              <keywords/>
+            </Call>
+          </Expr>
+        </body>
+        <decorator_list/>
+      </FunctionDef>
+      <FunctionDef name="bar" returns="None" type_comment="None" lineno="4" col_offset="0" end_lineno="6" end_col_offset="9">
+        <arguments vararg="None" kwarg="None">
+          <posonlyargs/>
+          <args/>
+          <kwonlyargs/>
+          <kw_defaults/>
+          <defaults/>
+        </arguments>
+        <body>
+          <Expr lineno="5" col_offset="4" end_lineno="5" end_col_offset="24">
+            <Call lineno="5" col_offset="4" end_lineno="5" end_col_offset="24">
+              <Name id="print" lineno="5" col_offset="4" end_lineno="5" end_col_offset="9">
+                <Load/>
+              </Name>
+              <args>
+                <Constant value="bar invoked" kind="None" lineno="5" col_offset="10" end_lineno="5" end_col_offset="23"/>
+              </args>
+              <keywords/>
+            </Call>
+          </Expr>
+          <Expr lineno="6" col_offset="4" end_lineno="6" end_col_offset="9">
+            <Call lineno="6" col_offset="4" end_lineno="6" end_col_offset="9">
+              <Name id="baz" lineno="6" col_offset="4" end_lineno="6" end_col_offset="7">
+                <Load/>
+              </Name>
+              <args/>
+              <keywords/>
+            </Call>
+          </Expr>
+        </body>
+        <decorator_list/>
+      </FunctionDef>
+      <FunctionDef name="intermediary" returns="None" type_comment="None" lineno="8" col_offset="0" end_lineno="10" end_col_offset="9">
+        <arguments vararg="None" kwarg="None">
+          <posonlyargs/>
+          <args/>
+          <kwonlyargs/>
+          <kw_defaults/>
+          <defaults/>
+        </arguments>
+        <body>
+          <Expr lineno="9" col_offset="4" end_lineno="9" end_col_offset="33">
+            <Call lineno="9" col_offset="4" end_lineno="9" end_col_offset="33">
+              <Name id="print" lineno="9" col_offset="4" end_lineno="9" end_col_offset="9">
+                <Load/>
+              </Name>
+              <args>
+                <Constant value="intermediary invoked" kind="None" lineno="9" col_offset="10" end_lineno="9" end_col_offset="32"/>
+              </args>
+              <keywords/>
+            </Call>
+          </Expr>
+          <Expr lineno="10" col_offset="4" end_lineno="10" end_col_offset="9">
+            <Call lineno="10" col_offset="4" end_lineno="10" end_col_offset="9">
+              <Name id="bar" lineno="10" col_offset="4" end_lineno="10" end_col_offset="7">
+                <Load/>
+              </Name>
+              <args/>
+              <keywords/>
+            </Call>
+          </Expr>
+        </body>
+        <decorator_list/>
+      </FunctionDef>
+      <FunctionDef name="foo" returns="None" type_comment="None" lineno="12" col_offset="0" end_lineno="14" end_col_offset="18">
+        <arguments vararg="None" kwarg="None">
+          <posonlyargs/>
+          <args/>
+          <kwonlyargs/>
+          <kw_defaults/>
+          <defaults/>
+        </arguments>
+        <body>
+          <Expr lineno="13" col_offset="4" end_lineno="13" end_col_offset="24">
+            <Call lineno="13" col_offset="4" end_lineno="13" end_col_offset="24">
+              <Name id="print" lineno="13" col_offset="4" end_lineno="13" end_col_offset="9">
+                <Load/>
+              </Name>
+              <args>
+                <Constant value="foo invoked" kind="None" lineno="13" col_offset="10" end_lineno="13" end_col_offset="23"/>
+              </args>
+              <keywords/>
+            </Call>
+          </Expr>
+          <Expr lineno="14" col_offset="4" end_lineno="14" end_col_offset="18">
+            <Call lineno="14" col_offset="4" end_lineno="14" end_col_offset="18">
+              <Name id="intermediary" lineno="14" col_offset="4" end_lineno="14" end_col_offset="16">
+                <Load/>
+              </Name>
+              <args/>
+              <keywords/>
+            </Call>
+          </Expr>
+        </body>
+        <decorator_list/>
+      </FunctionDef>
+    </body>
+    <type_ignores/>
+  </Module>
+</ast>

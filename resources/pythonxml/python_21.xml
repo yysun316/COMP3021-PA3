@@ -1,0 +1,159 @@
+<ast>
+  <Module>
+    <body>
+      <ClassDef name="A" lineno="1" col_offset="0" end_lineno="3" end_col_offset="16">
+        <bases/>
+        <keywords/>
+        <body>
+          <FunctionDef name="a" returns="None" type_comment="None" lineno="2" col_offset="4" end_lineno="3" end_col_offset="16">
+            <arguments vararg="None" kwarg="None">
+              <posonlyargs/>
+              <args/>
+              <kwonlyargs/>
+              <kw_defaults/>
+              <defaults/>
+            </arguments>
+            <body>
+              <Return lineno="3" col_offset="8" end_lineno="3" end_col_offset="16">
+                <Constant value="1" kind="None" lineno="3" col_offset="15" end_lineno="3" end_col_offset="16"/>
+              </Return>
+            </body>
+            <decorator_list/>
+          </FunctionDef>
+        </body>
+        <decorator_list/>
+      </ClassDef>
+      <FunctionDef name="main" returns="None" type_comment="None" lineno="4" col_offset="0" end_lineno="5" end_col_offset="12">
+        <arguments vararg="None" kwarg="None">
+          <posonlyargs/>
+          <args/>
+          <kwonlyargs/>
+          <kw_defaults/>
+          <defaults/>
+        </arguments>
+        <body>
+          <Return lineno="5" col_offset="4" end_lineno="5" end_col_offset="12">
+            <Constant value="1" kind="None" lineno="5" col_offset="11" end_lineno="5" end_col_offset="12"/>
+          </Return>
+        </body>
+        <decorator_list/>
+      </FunctionDef>
+      <ClassDef name="B" lineno="7" col_offset="0" end_lineno="9" end_col_offset="16">
+        <bases/>
+        <keywords/>
+        <body>
+          <FunctionDef name="b" returns="None" type_comment="None" lineno="8" col_offset="4" end_lineno="9" end_col_offset="16">
+            <arguments vararg="None" kwarg="None">
+              <posonlyargs/>
+              <args/>
+              <kwonlyargs/>
+              <kw_defaults/>
+              <defaults/>
+            </arguments>
+            <body>
+              <Return lineno="9" col_offset="8" end_lineno="9" end_col_offset="16">
+                <Constant value="1" kind="None" lineno="9" col_offset="15" end_lineno="9" end_col_offset="16"/>
+              </Return>
+            </body>
+            <decorator_list/>
+          </FunctionDef>
+        </body>
+        <decorator_list/>
+      </ClassDef>
+      <ClassDef name="C" lineno="11" col_offset="0" end_lineno="15" end_col_offset="16">
+        <bases>
+          <Name id="B" lineno="11" col_offset="8" end_lineno="11" end_col_offset="9">
+            <Load/>
+          </Name>
+        </bases>
+        <keywords/>
+        <body>
+          <FunctionDef name="b" returns="None" type_comment="None" lineno="12" col_offset="4" end_lineno="13" end_col_offset="16">
+            <arguments vararg="None" kwarg="None">
+              <posonlyargs/>
+              <args/>
+              <kwonlyargs/>
+              <kw_defaults/>
+              <defaults/>
+            </arguments>
+            <body>
+              <Return lineno="13" col_offset="8" end_lineno="13" end_col_offset="16">
+                <Constant value="1" kind="None" lineno="13" col_offset="15" end_lineno="13" end_col_offset="16"/>
+              </Return>
+            </body>
+            <decorator_list/>
+          </FunctionDef>
+          <FunctionDef name="main" returns="None" type_comment="None" lineno="14" col_offset="4" end_lineno="15" end_col_offset="16">
+            <arguments vararg="None" kwarg="None">
+              <posonlyargs/>
+              <args/>
+              <kwonlyargs/>
+              <kw_defaults/>
+              <defaults/>
+            </arguments>
+            <body>
+              <Return lineno="15" col_offset="8" end_lineno="15" end_col_offset="16">
+                <Constant value="1" kind="None" lineno="15" col_offset="15" end_lineno="15" end_col_offset="16"/>
+              </Return>
+            </body>
+            <decorator_list/>
+          </FunctionDef>
+        </body>
+        <decorator_list/>
+      </ClassDef>
+      <ClassDef name="D" lineno="17" col_offset="0" end_lineno="19" end_col_offset="16">
+        <bases>
+          <Name id="C" lineno="17" col_offset="8" end_lineno="17" end_col_offset="9">
+            <Load/>
+          </Name>
+        </bases>
+        <keywords/>
+        <body>
+          <FunctionDef name="b" returns="None" type_comment="None" lineno="18" col_offset="4" end_lineno="19" end_col_offset="16">
+            <arguments vararg="None" kwarg="None">
+              <posonlyargs/>
+              <args/>
+              <kwonlyargs/>
+              <kw_defaults/>
+              <defaults/>
+            </arguments>
+            <body>
+              <Return lineno="19" col_offset="8" end_lineno="19" end_col_offset="16">
+                <Constant value="1" kind="None" lineno="19" col_offset="15" end_lineno="19" end_col_offset="16"/>
+              </Return>
+            </body>
+            <decorator_list/>
+          </FunctionDef>
+        </body>
+        <decorator_list/>
+      </ClassDef>
+      <ClassDef name="E" lineno="21" col_offset="0" end_lineno="23" end_col_offset="16">
+        <bases>
+          <Name id="D" lineno="21" col_offset="8" end_lineno="21" end_col_offset="9">
+            <Load/>
+          </Name>
+        </bases>
+        <keywords/>
+        <body>
+          <FunctionDef name="b" returns="None" type_comment="None" lineno="22" col_offset="4" end_lineno="23" end_col_offset="16">
+            <arguments vararg="None" kwarg="None">
+              <posonlyargs/>
+              <args/>
+              <kwonlyargs/>
+              <kw_defaults/>
+              <defaults/>
+            </arguments>
+            <body>
+              <Return lineno="23" col_offset="8" end_lineno="23" end_col_offset="16">
+                <Constant value="1" kind="None" lineno="23" col_offset="15" end_lineno="23" end_col_offset="16"/>
+              </Return>
+            </body>
+            <decorator_list/>
+          </FunctionDef>
+        </body>
+        <decorator_list/>
+      </ClassDef>
+    </body>
+    <type_ignores/>
+  </Module>
+</ast>

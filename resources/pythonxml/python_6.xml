@@ -1,0 +1,27 @@
+<ast>
+  <Module>
+    <body>
+      <ClassDef name="Foo" lineno="1" col_offset="0" end_lineno="2" end_col_offset="8">
+        <bases/>
+        <keywords/>
+        <body>
+          <Pass lineno="2" col_offset="4" end_lineno="2" end_col_offset="8"/>
+        </body>
+        <decorator_list/>
+      </ClassDef>
+      <ClassDef name="Bar" lineno="4" col_offset="0" end_lineno="5" end_col_offset="8">
+        <bases>
+          <Name id="Foo" lineno="4" col_offset="10" end_lineno="4" end_col_offset="13">
+            <Load/>
+          </Name>
+        </bases>
+        <keywords/>
+        <body>
+          <Pass lineno="5" col_offset="4" end_lineno="5" end_col_offset="8"/>
+        </body>
+        <decorator_list/>
+      </ClassDef>
+    </body>
+    <type_ignores/>
+  </Module>
+</ast>
