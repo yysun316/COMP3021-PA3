@@ -96,7 +96,7 @@ For queries on methods and classes, the results are computed on AST `astID` whil
 
 Note that except for `queryOnNode`, all remaining queries are already performed on the single AST. Thus, the difference between mode `0` and mode `1` is that you need to distribute the `queryOnNode` task to multiple threads where each thread handles one AST, then you assemble their results to form the final one. Here, you must invoke the original methods in `queryOnNode` but you can modify their inputs to make each thread only handle one AST.
 
-**Mode `2` Optimized Parallel Execution. **You need to implement `runParallelWithOrder` to achieve specific queries in parallel, and the execution orders of queries are not random anymore. As you have observed, one query on class could rely on the result of another query on class. For instance, `findOverridingMethods` depends on the class inheritance hierarchy computed by `findSuperClasses`. 
+**Mode `2` Optimized Parallel Execution.** You need to implement `runParallelWithOrder` to achieve specific queries in parallel, and the execution orders of queries are not random anymore. As you have observed, one query on class could rely on the result of another query on class. For instance, `findOverridingMethods` depends on the class inheritance hierarchy computed by `findSuperClasses`. 
 
 In given implementations of query on classes, the calling dependence is shown below. Please consider implementing `runParallelWithOrder` in a way that queries are well-ordered so that to prevent repeat computations.
 
@@ -158,11 +158,11 @@ You are requested to achieve two versions. Still, remember to store the results 
 In the bonus task, you need to implement the same functionality as Task 3 using the given number of threads. The function to be implemented is shown below.
 
 ```java
-    public List<Object> processCommandsInterLeavedFixedThread(List<Object[]> commands, int numThread) {
-        // TODO: Bonus: interleaved parsing and query with given number of threads
-        // TODO: separate parser tasks and query tasks with the goal of efficiency
-        return allResults;
-    }
+public List<Object> processCommandsInterLeavedFixedThread(List<Object[]> commands, int numThread) {
+    // TODO: Bonus: interleaved parsing and query with given number of threads
+    // TODO: separate parser tasks and query tasks with the goal of efficiency
+    return allResults;
+}
 ```
 
 Please carefully manage the tasks each thread should handle based on their orders. The number of commands given is arbitrary. You are encouraged to achieve as high efficiency as possible. We will sort the time costs of your implementations and give bonuses to the top 3 students who implement bonus tasks.
