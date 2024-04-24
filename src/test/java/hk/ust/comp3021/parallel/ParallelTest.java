@@ -1,7 +1,6 @@
 package hk.ust.comp3021.parallel;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.util.*;
 
@@ -104,14 +103,12 @@ public class ParallelTest {
 
         List<Object[]> commands = new ArrayList<>();
         List<Object> expectedResults = new ArrayList<>();
-        List<Integer> expectedCounts = List.of(39, 2, 0, 8,1);
-        commands.add(new Object[] {"1", "18", "findClassesWithMain", new Object[] {}}); 
-        commands.add(new Object[] {"2", "18", "findSuperClasses", new Object[] {"H"}}); 
-        commands.add(new Object[] {"3", "18", "haveSuperClass", new Object[] {"H", "A"}}); 
-        commands.add(new Object[] {"4", "18", "haveSuperClass", new Object[] {"A", "H"}});
+        List<Integer> expectedCounts = List.of(2, 2, 0, 0,0);
+        commands.add(new Object[] {"2", "18", "findSuperClasses", new Object[] {"B"}});
+        commands.add(new Object[] {"3", "18", "haveSuperClass", new Object[] {"B", "A"}});
+        commands.add(new Object[] {"3", "18", "haveSuperClass", new Object[] {"B", "H"}});
 
-        expectedResults.add(Set.of("B", "C", "D", "E", "F", "G", "H"));
-        expectedResults.add(Set.of("A", "B", "C", "D", "F"));
+        expectedResults.add(Set.of("A"));
         expectedResults.add(true);
         expectedResults.add(false);
 
@@ -119,11 +116,7 @@ public class ParallelTest {
         engine.processCommands(commands, 2);
         List<Object> allResults = engine.getAllResults();
         List<Integer> allCounts = QueryOnClass.getCounts();
-
         checkResults(expectedResults, allResults, commands);
-        for (int i = 0; i < expectedCounts.size(); i++) {
-            assumeTrue(allCounts.get(i) <= expectedCounts.get(i));
-        }
         assertEquals(expectedCounts, allCounts);
     }
 
