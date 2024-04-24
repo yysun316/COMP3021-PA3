@@ -1,5 +1,11 @@
 # **COMP3021 Spring 2024 Java Programming Assignment 3 (PA3)**
 
+:warning: Please make sure you always pull the **latest** version of the PA skeleton!
+
+:heavy_exclamation_mark: **Updates** and **Skeleton Clarification**: 
+
+1. `testParallelExecutionWithOrder` is changed to be easier to understand and deterministic. Please update your code accordingly.
+
 ## **Python AST Management System**
 
 [AST (Abstract Syntax Tree)](https://en.wikipedia.org/wiki/Abstract_syntax_tree) is a tree representation that represents the syntactic structure of source code. It is widely used in compilers and interpreters to reason about relationships between program elements. In this project, you are required to implement your own management system, named ASTManager, to parse and analyze Python ASTs.
