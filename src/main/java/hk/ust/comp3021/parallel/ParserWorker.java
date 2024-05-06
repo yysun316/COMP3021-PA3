@@ -1,5 +1,6 @@
 package hk.ust.comp3021.parallel;
 
+import java.nio.file.Paths;
 import java.util.*;
 
 import hk.ust.comp3021.utils.*;
@@ -21,17 +22,30 @@ public class ParserWorker implements Runnable {
     }
 
     /**
-     * TODO: Implement {@link ParserWorker#run()} to load the AST whose ID is {@link ParserWorker#xmlID} from XML file 
+     * TODO: Implement {@link ParserWorker#run()} to load the AST whose ID is {@link ParserWorker#xmlID} from XML file
      * and store the results in {@link ParserWorker#id2ASTModules}
-     * 
-     * Hint1: you can invoke {@link ASTParser#parse()} to load the file but notice that 
+     * <p>
+     * Hint1: you can invoke {@link ASTParser#parse()} to load the file but notice that
      * {@link ParserWorker#id2ASTModules} will be written by multiple threads simultaneously
-     *
+     * <p>
      * Hint2: the methods will be used in both Task 1 and Task 3, please carefully design it
      * to be compatible with both tasks
      */
     @Override
     public void run() {
+//        Please implement the method run of Runnable
+//        interface to load AST of the given ID and store the results to id2ASTModules.You can invoke ASTParser.parser
+//        but please caution on the concurrent writing to the global mapping id2ASTModules.
+        ASTParser parser = new ASTParser(Paths.get(xmlDirPath).resolve("python_" + xmlID + ".xml").toString());
+        parser.parse();
+        if (!parser.isErr()) {
+            synchronized (id2ASTModules) {
+                id2ASTModules.put(xmlID, parser.getASTModule());
+            }
+            System.out.println("AST " + xmlID + " Succeed! The XML file is loaded!");
+        } else {
+            System.out.println("AST " + xmlID + " Failed! Please check your implementation!");
 
+        }
     }
 }

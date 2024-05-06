@@ -4,13 +4,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.*;
 
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 import hk.ust.comp3021.RapidASTManagerEngine;
 import hk.ust.comp3021.query.QueryOnClass;
 import hk.ust.comp3021.utils.TestKind;
 
+@TestMethodOrder(MethodOrderer.MethodName.class)
 public class ParallelTest {
 
     @SuppressWarnings("unchecked")
@@ -30,6 +30,7 @@ public class ParallelTest {
 
     @Tag(TestKind.PUBLIC)
     @Test
+    @Order(1)
     public void testParallelLoadingPool() {
         RapidASTManagerEngine engine = new RapidASTManagerEngine();
         engine.processXMLParsingPool("resources/pythonxml/", List.of("18", "19", "20", "100"), 4);
