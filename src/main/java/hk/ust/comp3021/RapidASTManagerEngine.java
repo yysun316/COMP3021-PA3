@@ -80,11 +80,10 @@ public class RapidASTManagerEngine {
      * @param threads the threads array
      * @param thread the new thread to be inserted
      */
-    private void processXMLParsingDivideHelper(Thread[] threads, Thread thread){
-        while (true){
+    private void processXMLParsingDivideHelper(Thread[] threads, Thread thread) {
+        while (true) {
             for (int i = 0; i < threads.length; i++) {
-                if (threads[i] == null || !threads[i].isAlive())
-                {
+                if (threads[i] == null || !threads[i].isAlive()) {
                     threads[i] = thread;
                     return;
                 }
@@ -104,6 +103,18 @@ public class RapidASTManagerEngine {
      *                      and {@link RapidASTManagerEngine#executeCommandsParallelWithOrder(List)}
      */
     public List<Object> processCommands(List<Object[]> commands, int executionMode) {
+        List<QueryWorker> workers = new ArrayList<>();
+        for (Object[] command : commands) {
+            workers.add(new QueryWorker(id2ASTModules, command[0].toString(),
+                    command[1].toString(), command[2].toString(),
+                    (Object[]) command[3], executionMode));
+        }
+        switch (executionMode){
+            case 0 -> executeCommandsSerial(workers);
+            case 1 -> executeCommandsParallel(workers);
+            case 2 -> executeCommandsParallelWithOrder(workers);
+        }
+        workers.forEach(worker -> allResults.add(worker.getResult()));
         return allResults;
     }
 
@@ -113,7 +124,9 @@ public class RapidASTManagerEngine {
      * @param workers a list of workers that should be executed sequentially
      */
     private void executeCommandsSerial(List<QueryWorker> workers) {
-
+        for (QueryWorker worker : workers) {
+            worker.run(); /* Sequential */
+        }
     }
 
     /**
@@ -125,6 +138,19 @@ public class RapidASTManagerEngine {
      *                Hint2: you can use unlimited number of threads
      */
     private void executeCommandsParallel(List<QueryWorker> workers) {
+        List<Thread> threads = new ArrayList<>();
+        workers.forEach(worker -> {
+            Thread thread = new Thread(worker);
+            thread.start();
+            threads.add(thread);
+        });
+        for (Thread thread : threads) {
+            try {
+                thread.join();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
 
     }
 
@@ -139,7 +165,62 @@ public class RapidASTManagerEngine {
      *                in queryOnClass
      */
     private void executeCommandsParallelWithOrder(List<QueryWorker> workers) {
+        Set<QueryWorker> visited = new HashSet<>();
+        List<Thread> threads = new ArrayList<>();
+        /* First execute all the find super classes method call */
+        for (int i = 0; i < workers.size(); i++) {
+            if (workers.get(i).queryName.equals("findSuperClasses")){
+                Thread thread = new Thread(workers.get(i));
+                threads.add(thread);
+                thread.start();
+                visited.add(workers.get(i));
+            }
+        }
+        for (Thread thread : threads) {
+            try {
+                thread.join();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
 
+        /* Then execute all the non findClassesWithMain methods */
+        for (int i = 0; i < workers.size(); i++)
+        {
+            if (!workers.get(i).queryName.equals("findClassesWithMain") && !visited.contains(workers.get(i)))
+            {
+                Thread thread = new Thread(workers.get(i));
+                threads.add(thread);
+                thread.start();
+                visited.add(workers.get(i));
+            }
+        }
+        for (Thread thread : threads) {
+            try {
+                thread.join();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        /* Lastly execute the findClassesWithMain method */
+        for (int i = 0; i < workers.size(); ++i)
+        {
+            if (workers.get(i).queryName.equals("findClassesWithMain"))
+            {
+                Thread thread = new Thread(workers.get(i));
+                threads.add(thread);
+                thread.start();
+                visited.add(workers.get(i));
+            }
+        }
+        for (Thread thread : threads) {
+            try {
+                thread.join();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     /**

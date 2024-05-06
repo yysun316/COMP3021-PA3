@@ -30,7 +30,6 @@ public class ParallelTest {
 
     @Tag(TestKind.PUBLIC)
     @Test
-    @Order(1)
     public void testParallelLoadingPool() {
         RapidASTManagerEngine engine = new RapidASTManagerEngine();
         engine.processXMLParsingPool("resources/pythonxml/", List.of("18", "19", "20", "100"), 4);
