@@ -151,64 +151,6 @@ public class QueryWorker implements Runnable {
         });
         /* Result retrieval */
         getResult(workers);
-
-   /*     ExecutorService executor = Executors.newFixedThreadPool(numThreads);
-        List<Future<Object>> futures = new ArrayList<>();
-
-        id2ASTModules.forEach((key, value) -> {
-            HashMap<String, ASTModule> tmpMap = new HashMap<>();
-            tmpMap.put(key, value);
-            QueryWorker tmpWorker = new QueryWorker(tmpMap, queryID, astID, queryName, args, 0);
-            futures.add((Future<Object>) executor.submit(tmpWorker));
-        });
-
-        result = switch (queryName) {
-            case "findFuncWithArgGtN" -> {
-                List<String> res = new ArrayList<>();
-                futures.forEach(future -> {
-                    try {
-                        res.addAll((Collection<? extends String>) future.get());
-                    } catch (InterruptedException | ExecutionException e) {
-                        throw new RuntimeException(e);
-                    }
-                });
-                yield res;
-            }
-            case "calculateOp2Nums" -> {
-                HashMap<String, Integer> res = new HashMap();
-                futures.forEach(future -> {
-                    try {
-                        res.putAll((Map<? extends String, ? extends Integer>) future.get());
-                    } catch (InterruptedException | ExecutionException e) {
-                        throw new RuntimeException(e);
-                    }
-                });
-                yield res;
-            }
-            case "calculateNode2Nums" -> {
-                Map<String, Long> res = new HashMap();
-                futures.forEach(future -> {
-                    try {
-                        res.putAll((Map<? extends String, ? extends Long>) future.get());
-                    } catch (InterruptedException | ExecutionException e) {
-                        throw new RuntimeException(e);
-                    }
-                });
-                yield res;
-            }
-            case "processNodeFreq" -> {
-                List<Map.Entry<String, Integer>> res = new ArrayList<>();
-                futures.forEach(future -> {
-                    try {
-                        res.addAll((Collection<? extends Map.Entry<String, Integer>>) future.get());
-                    } catch (InterruptedException | ExecutionException e) {
-                        throw new RuntimeException(e);
-                    }
-                });
-                yield res;
-            }
-            default -> null;
-        };*/
     }
 
     private void getResult(ArrayList<QueryWorker> workers) {
