@@ -4,7 +4,6 @@ import hk.ust.comp3021.query.*;
 import hk.ust.comp3021.utils.*;
 
 import java.util.*;
-import java.util.concurrent.*;
 
 public class QueryWorker implements Runnable {
     public HashMap<String, ASTModule> id2ASTModules;
@@ -16,18 +15,25 @@ public class QueryWorker implements Runnable {
     private Object result;
 
     /* Lists storing the name of functions in the query classes */
-    public static final ArrayList<String> queryMethods;
-    public static final ArrayList<String> queryClasses;
-    public static final ArrayList<String> queryNodes;
+    public static final ArrayList<String> QUERY_METHODS;
+    public static final ArrayList<String> QUERY_CLASSES;
+    public static final ArrayList<String> QUERY_NODES;
 
     static {
-        queryMethods = new ArrayList<>(Arrays.asList("findEqualCompareInFunc", "findFuncWithBoolParam", "findUnusedParamInFunc", "findDirectCalledOtherB", "answerIfACalledB"));
-        queryClasses = new ArrayList<>(Arrays.asList("findSuperClasses", "haveSuperClass", "findOverridingMethods", "findAllMethods", "findClassesWithMain"));
-        queryNodes = new ArrayList<>(Arrays.asList("findFuncWithArgGtN", "calculateOp2Nums", "calculateNode2Nums", "processNodeFreq"));
+        QUERY_METHODS = new ArrayList<>(Arrays.asList(
+                "findEqualCompareInFunc", "findFuncWithBoolParam", "findUnusedParamInFunc",
+                "findDirectCalledOtherB", "answerIfACalledB"));
+        QUERY_CLASSES = new ArrayList<>(Arrays.asList(
+                "findSuperClasses", "haveSuperClass", "findOverridingMethods",
+                "findAllMethods", "findClassesWithMain"));
+        QUERY_NODES = new ArrayList<>(Arrays.asList(
+                "findFuncWithArgGtN", "calculateOp2Nums",
+                "calculateNode2Nums", "processNodeFreq"));
     }
 
 
-    public QueryWorker(HashMap<String, ASTModule> id2ASTModules, String queryID, String astID, String queryName, Object[] args, int mode) {
+    public QueryWorker(HashMap<String, ASTModule> id2ASTModules, String queryID, String astID,
+                       String queryName, Object[] args, int mode) {
         this.id2ASTModules = id2ASTModules;
         this.queryID = queryID;
         this.astID = astID;
@@ -58,11 +64,11 @@ public class QueryWorker implements Runnable {
      */
     private void runSerial() {
         /* Determine which type of query it is */
-        if (queryMethods.contains(queryName)) {
+        if (QUERY_METHODS.contains(queryName)) {
             handleMethods();
-        } else if (queryNodes.contains(queryName)) {
+        } else if (QUERY_NODES.contains(queryName)) {
             handleNodes();
-        } else if (queryClasses.contains(queryName)) {
+        } else if (QUERY_CLASSES.contains(queryName)) {
             handleClasses();
         }
 
@@ -119,11 +125,11 @@ public class QueryWorker implements Runnable {
      * Hint4: you can invoke {@link QueryWorker#runSerial()} to reuse its logic
      */
     private void runParallel() {
-        if (queryMethods.contains(queryName)) {
+        if (QUERY_METHODS.contains(queryName)) {
             handleMethods();
-        } else if (queryClasses.contains(queryName)) {
+        } else if (QUERY_CLASSES.contains(queryName)) {
             handleClasses();
-        } else if (queryNodes.contains(queryName)) {
+        } else if (QUERY_NODES.contains(queryName)) {
             handleNodesInParallel();
         }
     }
@@ -152,11 +158,12 @@ public class QueryWorker implements Runnable {
         /* Result retrieval */
         getResult(workers);
     }
-
+    @SuppressWarnings("unchecked")
     private void getResult(ArrayList<QueryWorker> workers) {
         ArrayList<Object> res = new ArrayList<>();
         workers.forEach(worker -> res.add(worker.getResult()));
-        if ("findFuncWithArgGtN".equals(queryName)) result = res.stream().map(val -> (int) val).reduce(0, Integer::sum);
+        if ("findFuncWithArgGtN".equals(queryName))
+            result = res.stream().map(val -> (int) val).reduce(0, Integer::sum);
         if ("calculateOp2Nums".equals(queryName)) {
             HashMap<String, Integer> allMaps = new HashMap<>();
             res.stream().map(m -> (HashMap<String, Integer>) m)
@@ -165,7 +172,7 @@ public class QueryWorker implements Runnable {
                                     allMaps.put(key, allMaps.getOrDefault(key, 0) + value)));
             result = allMaps;
         }
-        if ("calculateNode2Nums".equals(queryName)){
+        if ("calculateNode2Nums".equals(queryName)) {
             Map<String, Long> allMaps = new HashMap<>();
             res.stream().map(m -> (HashMap<String, Long>) m)
                     .forEach(map ->
@@ -173,7 +180,7 @@ public class QueryWorker implements Runnable {
                                     allMaps.put(key, allMaps.getOrDefault(key, 0L) + value)));
             result = allMaps;
         }
-        if ("processNodeFreq".equals(queryName)){
+        if ("processNodeFreq".equals(queryName)) {
             List<Map.Entry<String, Integer>> list = new ArrayList<>();
             res.forEach(l -> list.addAll((List<Map.Entry<String, Integer>>) l));
             result = list;

@@ -33,9 +33,6 @@ public class ParserWorker implements Runnable {
      */
     @Override
     public void run() {
-//        Please implement the method run of Runnable
-//        interface to load AST of the given ID and store the results to id2ASTModules.You can invoke ASTParser.parser
-//        but please caution on the concurrent writing to the global mapping id2ASTModules.
         ASTParser parser = new ASTParser(Paths.get(xmlDirPath).resolve("python_" + xmlID + ".xml").toString());
         parser.parse();
         if (!parser.isErr()) {

@@ -3,9 +3,6 @@ package hk.ust.comp3021;
 import hk.ust.comp3021.parallel.*;
 import hk.ust.comp3021.utils.*;
 
-import javax.management.Query;
-import javax.swing.plaf.TableHeaderUI;
-import javax.swing.text.html.parser.Parser;
 import java.util.concurrent.*;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
@@ -57,7 +54,8 @@ public class RapidASTManagerEngine {
      *                   <p>
      *                   Hint1: you can **only** use {@link Thread} to implement the method
      *                   Hint2: you can use {@link ParserWorker#run()}
-     *                   Hint3: please distribute the files to be loaded for each thread manually and try to achieve high efficiency
+     *                   Hint3: please distribute the files to be loaded for each thread manually
+     *                   and try to achieve high efficiency
      */
     public void processXMLParsingDivide(String xmlDirPath, List<String> xmlIDs, int numThread) {
         Thread[] threads = new Thread[numThread];
@@ -118,6 +116,7 @@ public class RapidASTManagerEngine {
             case 0 -> executeCommandsSerial(workers);
             case 1 -> executeCommandsParallel(workers);
             case 2 -> executeCommandsParallelWithOrder(workers);
+            default -> System.out.println("Invalid execution mode");
         }
         workers.forEach(worker -> allResults.add(worker.getResult()));
         return allResults;
@@ -164,9 +163,11 @@ public class RapidASTManagerEngine {
      *
      * @param workers a list of workers that should be executed in parallel with correct order
      *                <p>
-     *                Hint1: you can invoke {@link RapidASTManagerEngine#executeCommandsParallel(List)} to reuse its logic
+     *                Hint1: you can invoke {@link RapidASTManagerEngine#executeCommandsParallel(List)} to
+     *                reuse its logic
      *                Hint2: you can use unlimited number of threads
-     *                Hint3: please design the order of queries running in parallel based on the calling dependence of method
+     *                Hint3: please design the order of queries running in parallel based on the calling
+     *                dependence of method
      *                in queryOnClass
      */
     private void executeCommandsParallelWithOrder(List<QueryWorker> workers) {
@@ -231,8 +232,10 @@ public class RapidASTManagerEngine {
      *                 <p>
      *                 Hint1: you can **only** use {@link Thread} to create threads
      *                 Hint2: you can use unlimited number of threads
-     *                 Hint3: please design the order of commands, where for specific ID, AST load should be executed before query
-     *                 Hint4: threads would write into/read from {@link RapidASTManagerEngine#id2ASTModules} at the same time, please
+     *                 Hint3: please design the order of commands, where for specific ID,
+     *                 AST load should be executed before query
+     *                 Hint4: threads would write into/read from {@link RapidASTManagerEngine#id2ASTModules} at
+     *                 the same time, please
      *                 synchronize them carefully
      *                 Hint5: you can invoke {@link QueryWorker#run()} and {@link ParserWorker#run()}
      *                 Hint6: order of queries should be consistent to that in given commands, no need to consider
@@ -244,7 +247,7 @@ public class RapidASTManagerEngine {
         List<Object[]> queryCommands = new ArrayList<>();
         /* Separate the commands into 2 categories: load , query */
         for (Object[] command : commands) {
-            if (((String) command[2]).equals("processXMLParsing")) {
+            if (command[2].equals("processXMLParsing")) {
                 loadCommands.add(command);
             } else {
                 queryCommands.add(command);
@@ -269,7 +272,7 @@ public class RapidASTManagerEngine {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
-        finishProcessing = false;
+        finishedProcessing = false;
         return allResults;
     }
 
@@ -299,14 +302,14 @@ public class RapidASTManagerEngine {
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
-            lock.lock();
+            LOCK.lock();
             processedIds.add(parserWorkers.get(i).getXmlID());
-            lock.unlock();
+            LOCK.unlock();
         }
         /* finished processing, no more update will be done*/
-        lock.lock();
-        finishProcessing = true;
-        lock.unlock();
+        LOCK.lock();
+        finishedProcessing = true;
+        LOCK.unlock();
     }
 
     private List<Object> queryUnlimitedHelper(List<Object[]> queryCommands, Set<String> processedIds, int size) {
@@ -314,18 +317,19 @@ public class RapidASTManagerEngine {
         QueryWorker[] queryWorkers = new QueryWorker[size];
         ArrayList<Thread> threads = new ArrayList<>();
 
-        while (queryCount > 0 && !finishProcessing) {
+        while (queryCount > 0 && !finishedProcessing) {
             // query id, ast id, query name, query args
             Iterator<Object[]> iterator = queryCommands.iterator();
             while (iterator.hasNext()) {
                 Object[] queryCommand = iterator.next();
                 String astId = (String) queryCommand[1];
-                lock.lock();
+                LOCK.lock();
                 if (processedIds.contains(astId)) {
                     String queryId = (String) queryCommand[0];
                     String queryName = (String) queryCommand[2];
                     Object[] args = (Object[]) queryCommand[3];
-                    QueryWorker worker = new QueryWorker(id2ASTModules, queryId, astId, queryName, args, 1);
+                    QueryWorker worker = new QueryWorker(id2ASTModules, queryId,
+                            astId, queryName, args, 1);
                     Thread thread = new Thread(worker);
                     thread.start();
                     threads.add(thread);
@@ -333,7 +337,7 @@ public class RapidASTManagerEngine {
                     iterator.remove(); /* Be careful */
                     queryCount--;
                 }
-                lock.unlock();
+                LOCK.unlock();
             }
         }
         /* Check it one more time to ensure all the commands are processed */
@@ -341,7 +345,7 @@ public class RapidASTManagerEngine {
         while (iterator.hasNext()) {
             Object[] queryCommand = iterator.next();
             String astId = (String) queryCommand[1];
-            lock.lock();
+            LOCK.lock();
             if (processedIds.contains(astId)) {
                 String queryId = (String) queryCommand[0];
                 String queryName = (String) queryCommand[2];
@@ -354,7 +358,7 @@ public class RapidASTManagerEngine {
                 iterator.remove(); /* Be careful */
                 queryCount--;
             }
-            lock.unlock();
+            LOCK.unlock();
         }
 
         threads.forEach(thread -> {
@@ -379,8 +383,10 @@ public class RapidASTManagerEngine {
      *                 <p>
      *                 Hint1: you can **only** use {@link Thread} to create threads
      *                 Hint2: you can only use two threads, one for AST load, another for query
-     *                 Hint3: please design the order of commands, where for specific ID, AST load should be executed before query
-     *                 Hint4: threads would write into/read from {@link RapidASTManagerEngine#id2ASTModules} at the same time, please
+     *                 Hint3: please design the order of commands, where for specific ID, AST load
+     *                 should be executed before query
+     *                 Hint4: threads would write into/read from {@link RapidASTManagerEngine#id2ASTModules}
+     *                 at the same time, please
      *                 synchronize them carefully
      *                 Hint5: you can invoke {@link QueryWorker#run()} and {@link ParserWorker#run()}
      *                 Hint6: order of queries should be consistent to that in given commands, no need to consider
@@ -392,7 +398,7 @@ public class RapidASTManagerEngine {
         List<Object[]> queryCommands = new ArrayList<>();
         /* Separate the commands into 2 categories: load , query */
         for (Object[] command : commands) {
-            if (((String) command[2]).equals("processXMLParsing")) {
+            if (command[2].equals("processXMLParsing")) {
                 loadCommands.add(command);
             } else {
                 queryCommands.add(command);
@@ -401,7 +407,8 @@ public class RapidASTManagerEngine {
 
         Thread loadThread = new Thread(() -> loadHelper(loadCommands, processedIds));
         loadThread.start();
-        Thread queryThread = new Thread(() -> allResults.addAll(queryHelper(queryCommands, processedIds, commands.size())));
+        Thread queryThread = new Thread(() ->
+                allResults.addAll(queryHelper(queryCommands, processedIds, commands.size())));
         queryThread.start();
         try {
             loadThread.join();
@@ -413,23 +420,23 @@ public class RapidASTManagerEngine {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
-        finishProcessing = false;
+        finishedProcessing = false;
         return allResults;
     }
 
-    private volatile boolean finishProcessing = false;
-    private static final ReentrantLock lock = new ReentrantLock();
+    private volatile boolean finishedProcessing = false;
+    private static final ReentrantLock LOCK = new ReentrantLock();
 
     private List<Object> queryHelper(List<Object[]> queryCommands, Set<String> processedIds, int size) {
         int queryCount = queryCommands.size();
         QueryWorker[] queryWorkers = new QueryWorker[size];
-        while (queryCount > 0 && !finishProcessing) {
+        while (queryCount > 0 && !finishedProcessing) {
             // query id, ast id, query name, query args
             Iterator<Object[]> iterator = queryCommands.iterator();
             while (iterator.hasNext()) {
                 Object[] queryCommand = iterator.next();
                 String astId = (String) queryCommand[1];
-                lock.lock();
+                LOCK.lock();
                 if (processedIds.contains(astId)) {
                     String queryId = (String) queryCommand[0];
                     String queryName = (String) queryCommand[2];
@@ -440,7 +447,7 @@ public class RapidASTManagerEngine {
                     iterator.remove(); /* Be careful */
                     queryCount--;
                 }
-                lock.unlock();
+                LOCK.unlock();
             }
         }
         /* Check it one more time to ensure all the commands are processed */
@@ -448,7 +455,7 @@ public class RapidASTManagerEngine {
         while (iterator.hasNext()) {
             Object[] queryCommand = iterator.next();
             String astId = (String) queryCommand[1];
-            lock.lock();
+            LOCK.lock();
             if (processedIds.contains(astId)) {
                 String queryId = (String) queryCommand[0];
                 String queryName = (String) queryCommand[2];
@@ -459,7 +466,7 @@ public class RapidASTManagerEngine {
                 iterator.remove(); /* Be careful */
                 queryCount--;
             }
-            lock.unlock();
+            LOCK.unlock();
         }
         /* Retrieve result */
         return Arrays.stream(queryWorkers).
@@ -473,9 +480,9 @@ public class RapidASTManagerEngine {
         ParserWorker parserWorker = null;
         while (loadCount < loadCommands.size()) {
             if (parserWorker != null) { /* Finish parsing and we can execute its query for this id */
-                lock.lock();
+                LOCK.lock();
                 processedIds.add(parserWorker.getXmlID());
-                lock.unlock();
+                LOCK.unlock();
             }
             // command id, ast id, command name, command args
             Object[] loadCommand = loadCommands.get(loadCount);
@@ -487,14 +494,14 @@ public class RapidASTManagerEngine {
         }
 
         if (parserWorker != null) {
-            lock.lock();
+            LOCK.lock();
             processedIds.add(parserWorker.getXmlID());
-            lock.unlock();
+            LOCK.unlock();
         }
         /* finished processing, no more update will be done*/
-        lock.lock();
-        finishProcessing = true;
-        lock.unlock();
+        LOCK.lock();
+        finishedProcessing = true;
+        LOCK.unlock();
     }
 
 
@@ -505,11 +512,14 @@ public class RapidASTManagerEngine {
      * @param numThread number of threads you are allowed to use
      *                  <p>
      *                  Hint1: you can only distribute commands on your need
-     *                  Hint2: please design the order of commands, where for specific ID, AST load should be executed before query
-     *                  Hint3: threads would write into/read from {@link RapidASTManagerEngine#id2ASTModules} at the same time, please
+     *                  Hint2: please design the order of commands, where for specific ID,
+     *                  AST load should be executed before query
+     *                  Hint3: threads would write into/read from {@link RapidASTManagerEngine#id2ASTModules}
+     *                  at the same time, please
      *                  synchronize them carefully
      *                  Hint4: you can invoke {@link QueryWorker#run()} and {@link ParserWorker#run()}
      */
+    @SuppressWarnings("unchecked")
     public List<Object> processCommandsInterLeavedFixedThread(List<Object[]> commands, int numThread) {
         // TODO: Bonus: interleaved parsing and query with given number of threads
         // TODO: separate parser tasks and query tasks with the goal of efficiency
@@ -517,7 +527,7 @@ public class RapidASTManagerEngine {
         Map<String, Object[]> loadCommands = new HashMap<>();
         Map<String, List<Object[]>> queryCommands = new HashMap<>();
         for (Object[] command : commands) {
-            if (((String) command[2]).equals("processXMLParsing")) {
+            if (command[2].equals("processXMLParsing")) {
                 loadCommands.put((String) command[1], command);
             } else {
                 queryCommands.computeIfAbsent((String) command[1], k -> new ArrayList<>()).add(command);
@@ -550,7 +560,8 @@ public class RapidASTManagerEngine {
                         String queryId = (String) queryCommand[0];
                         String queryName = (String) queryCommand[2];
                         Object[] args = (Object[]) queryCommand[3];
-                        QueryWorker queryWorker = new QueryWorker(id2ASTModules, queryId, entry.getKey(), queryName, args, 0);
+                        QueryWorker queryWorker = new QueryWorker(id2ASTModules, queryId, entry.getKey(),
+                                queryName, args, 0);
                         futureTasks.put(queryWorker, (Future<Object>) executor.submit(queryWorker));
                     }
                     queryCommands.put(entry.getKey(), null);

@@ -10,7 +10,6 @@ import hk.ust.comp3021.RapidASTManagerEngine;
 import hk.ust.comp3021.query.QueryOnClass;
 import hk.ust.comp3021.utils.TestKind;
 
-@TestMethodOrder(MethodOrderer.MethodName.class)
 public class ParallelTest {
 
     @SuppressWarnings("unchecked")
