@@ -148,13 +148,7 @@ public class RapidASTManagerEngine {
             thread.start();
             threads.add(thread);
         });
-        for (Thread thread : threads) {
-            try {
-                thread.join();
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        }
+        joinAll(threads);
 
     }
 
@@ -182,13 +176,7 @@ public class RapidASTManagerEngine {
                 visited.add(worker);
             }
         }
-        for (Thread thread : threads) {
-            try {
-                thread.join();
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        }
+        joinAll(threads);
 
         /* Then execute all the non findClassesWithMain methods */
         for (QueryWorker worker : workers) {
@@ -199,13 +187,7 @@ public class RapidASTManagerEngine {
                 visited.add(worker);
             }
         }
-        for (Thread thread : threads) {
-            try {
-                thread.join();
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        }
+        joinAll(threads);
 
         /* Lastly execute the findClassesWithMain method */
         for (QueryWorker worker : workers) {
@@ -216,6 +198,10 @@ public class RapidASTManagerEngine {
                 visited.add(worker);
             }
         }
+        joinAll(threads);
+    }
+
+    private static void joinAll(List<Thread> threads) {
         for (Thread thread : threads) {
             try {
                 thread.join();
@@ -361,13 +347,7 @@ public class RapidASTManagerEngine {
             LOCK.unlock();
         }
 
-        threads.forEach(thread -> {
-            try {
-                thread.join();
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        });
+        joinAll(threads);
 
         /* Retrieve result */
         return Arrays.stream(queryWorkers).
