@@ -158,12 +158,14 @@ public class QueryWorker implements Runnable {
         /* Result retrieval */
         getResult(workers);
     }
+
     @SuppressWarnings("unchecked")
     private void getResult(ArrayList<QueryWorker> workers) {
         ArrayList<Object> res = new ArrayList<>();
         workers.forEach(worker -> res.add(worker.getResult()));
-        if ("findFuncWithArgGtN".equals(queryName))
-            result = res.stream().map(val -> (int) val).reduce(0, Integer::sum);
+        if ("findFuncWithArgGtN".equals(queryName)) {
+            result = res;
+        }
         if ("calculateOp2Nums".equals(queryName)) {
             HashMap<String, Integer> allMaps = new HashMap<>();
             res.stream().map(m -> (HashMap<String, Integer>) m)
@@ -183,8 +185,9 @@ public class QueryWorker implements Runnable {
         if ("processNodeFreq".equals(queryName)) {
             List<Map.Entry<String, Integer>> list = new ArrayList<>();
             res.forEach(l -> list.addAll((List<Map.Entry<String, Integer>>) l));
+            list.sort(Map.Entry.<String, Integer>comparingByValue().reversed());
             result = list;
-        }
+        } /* sort */
     }
 
 
@@ -199,6 +202,44 @@ public class QueryWorker implements Runnable {
      * Hint4: you can add new methods or fields in current class
      */
     private void runParallelWithOrder() {
-        runParallel();
+        synchronized (prerequisites) {
+            while (hasPrerequisite()) {
+                try {
+                    prerequisites.wait();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            prerequisites.remove(astID + queryName);
+            if (queryName.equals("findSuperClasses"))
+                prerequisites.remove(astID + queryName + args[0].toString());
+            runSerial();
+            prerequisites.notifyAll();
+        }
+    }
+
+    private boolean hasPrerequisite() {
+        ArrayList<String> list = new ArrayList<>();
+        switch (queryName) {
+            case "haveSuperClass" -> list.add(astID + "findSuperClasses" + args[0]);
+            case "findAllMethods", "findOverridingMethods" -> list.add(astID + "findSuperClasses");
+            case "findClassesWithMain" -> {
+                list.add(astID + "findSuperClasses");
+                list.add(astID + "findAllMethods");
+            }
+            default -> {
+            }
+        }
+        for (String s : list) {
+            if (prerequisites.contains(s))
+                return true;
+        }
+        return false;
+    }
+
+    private static HashSet<String> prerequisites;
+
+    public static void setPrerequisites(HashSet<String> prerequisites) {
+        QueryWorker.prerequisites = prerequisites;
     }
 }

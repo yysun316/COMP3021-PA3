@@ -165,38 +165,29 @@ public class RapidASTManagerEngine {
      *                in queryOnClass
      */
     private void executeCommandsParallelWithOrder(List<QueryWorker> workers) {
-        Set<QueryWorker> visited = new HashSet<>();
-        List<Thread> threads = new ArrayList<>();
-        /* First execute all the find super classes method call */
+        /* If we cannot find the prerequisite using his astID + queryName, meaning they are fulfilled */
+        HashSet<String> prerequisites = new HashSet<>(); /* astID + queryName to fulfilled */
+        ArrayList<Thread> threads = new ArrayList<>();
         for (QueryWorker worker : workers) {
-            if (worker.queryName.equals("findSuperClasses")) {
-                Thread thread = new Thread(worker);
-                threads.add(thread);
-                thread.start();
-                visited.add(worker);
+            switch (worker.queryName) {
+                case "findSuperClasses" -> {
+                    /* haveSuperClass cares the class name aka args[0] */
+                    prerequisites.add(worker.astID + worker.queryName + worker.args[0].toString());
+                    prerequisites.add(worker.astID + worker.queryName);
+                }
+                case "findAllMethods" -> {
+                    /* findClassesWithMain doesn't care the class name aka args */
+                    prerequisites.add(worker.astID + worker.queryName);
+                }
+                default -> {
+                }
             }
         }
-        joinAll(threads);
-
-        /* Then execute all the non findClassesWithMain methods */
+        QueryWorker.setPrerequisites(prerequisites);
         for (QueryWorker worker : workers) {
-            if (!worker.queryName.equals("findClassesWithMain") && !visited.contains(worker)) {
-                Thread thread = new Thread(worker);
-                threads.add(thread);
-                thread.start();
-                visited.add(worker);
-            }
-        }
-        joinAll(threads);
-
-        /* Lastly execute the findClassesWithMain method */
-        for (QueryWorker worker : workers) {
-            if (worker.queryName.equals("findClassesWithMain")) {
-                Thread thread = new Thread(worker);
-                threads.add(thread);
-                thread.start();
-                visited.add(worker);
-            }
+            Thread thread = new Thread(worker);
+            thread.start();
+            threads.add(thread);
         }
         joinAll(threads);
     }
@@ -240,7 +231,7 @@ public class RapidASTManagerEngine {
             }
         }
 
-        Thread loadThread = new Thread(() -> loadASTHelper(loadCommands, processedIds));
+        Thread loadThread = new Thread(() -> loadUnlimitedHelper(loadCommands, processedIds));
         loadThread.start();
 
 
@@ -262,7 +253,7 @@ public class RapidASTManagerEngine {
         return allResults;
     }
 
-    private void loadASTHelper(List<Object[]> loadCommands, Set<String> processedIds) {
+    private void loadUnlimitedHelper(List<Object[]> loadCommands, Set<String> processedIds) {
         int loadCount = 0;
         ArrayList<Thread> threads = new ArrayList<>();
         ArrayList<ParserWorker> parserWorkers = new ArrayList<>();
@@ -557,7 +548,7 @@ public class RapidASTManagerEngine {
             throw new RuntimeException(e);
         }
         Object[] results = new Object[commands.size()];
-        for (Map.Entry<QueryWorker, Future<Object>> futureEntry : futureTasks.entrySet()){
+        for (Map.Entry<QueryWorker, Future<Object>> futureEntry : futureTasks.entrySet()) {
             try {
                 futureEntry.getValue().get(); // wait
                 Object o = futureEntry.getKey().getResult();
