@@ -166,21 +166,17 @@ public class RapidASTManagerEngine {
      */
     private void executeCommandsParallelWithOrder(List<QueryWorker> workers) {
         /* If we cannot find the prerequisite using his astID + queryName, meaning they are fulfilled */
-        HashSet<String> prerequisites = new HashSet<>(); /* astID + queryName to fulfilled */
+        HashMap<String, Integer> prerequisites = new HashMap<>(); /* astID + queryName to fulfilled */
         ArrayList<Thread> threads = new ArrayList<>();
         for (QueryWorker worker : workers) {
-            switch (worker.queryName) {
-                case "findSuperClasses" -> {
-                    /* haveSuperClass cares the class name aka args[0] */
-                    prerequisites.add(worker.astID + worker.queryName + worker.args[0].toString());
-                    prerequisites.add(worker.astID + worker.queryName);
-                }
-                case "findAllMethods" -> {
-                    /* findClassesWithMain doesn't care the class name aka args */
-                    prerequisites.add(worker.astID + worker.queryName);
-                }
-                default -> {
-                }
+            if (worker.queryName.equals("findSuperClasses")) {/* haveSuperClass / findAllMethods cares the class name*/
+                String key1 = worker.astID + worker.queryName + worker.args[0].toString();
+                String key2 = worker.astID + worker.queryName;
+                prerequisites.put(key1, prerequisites.getOrDefault(key1, 0) + 1);
+                prerequisites.put(key2, prerequisites.getOrDefault(key2, 0) + 1);
+            } else {
+                String key = worker.astID + worker.queryName;
+                prerequisites.put(key, prerequisites.getOrDefault(key, 0) + 1);
             }
         }
         QueryWorker.setPrerequisites(prerequisites);

@@ -210,9 +210,12 @@ public class QueryWorker implements Runnable {
                     throw new RuntimeException(e);
                 }
             }
-            prerequisites.remove(astID + queryName);
-            if (queryName.equals("findSuperClasses"))
-                prerequisites.remove(astID + queryName + args[0].toString());
+            String key1 = astID + queryName;
+            prerequisites.put(key1, prerequisites.get(key1) - 1);
+            if (queryName.equals("findSuperClasses")){
+                String key2 = key1 + args[0].toString();
+                prerequisites.put(key2, prerequisites.get(key2) -1);
+            }
             runSerial();
             prerequisites.notifyAll();
         }
@@ -221,8 +224,8 @@ public class QueryWorker implements Runnable {
     private boolean hasPrerequisite() {
         ArrayList<String> list = new ArrayList<>();
         switch (queryName) {
-            case "haveSuperClass" -> list.add(astID + "findSuperClasses" + args[0]);
-            case "findAllMethods", "findOverridingMethods" -> list.add(astID + "findSuperClasses");
+            case "haveSuperClass", "findAllMethods" -> list.add(astID + "findSuperClasses" + args[0]);
+            case "findOverridingMethods" -> list.add(astID + "findSuperClasses");
             case "findClassesWithMain" -> {
                 list.add(astID + "findSuperClasses");
                 list.add(astID + "findAllMethods");
@@ -230,16 +233,17 @@ public class QueryWorker implements Runnable {
             default -> {
             }
         }
-        for (String s : list) {
-            if (prerequisites.contains(s))
+        for (String key : list) {
+            Integer val = prerequisites.get(key);
+            if (val != null && val > 0)
                 return true;
         }
         return false;
     }
 
-    private static HashSet<String> prerequisites;
+    private static HashMap<String, Integer> prerequisites;
 
-    public static void setPrerequisites(HashSet<String> prerequisites) {
+    public static void setPrerequisites(HashMap<String, Integer> prerequisites) {
         QueryWorker.prerequisites = prerequisites;
     }
 }
