@@ -58,40 +58,25 @@ public class RapidASTManagerEngine {
      *                   and try to achieve high efficiency
      */
     public void processXMLParsingDivide(String xmlDirPath, List<String> xmlIDs, int numThread) {
-        Thread[] threads = new Thread[numThread];
-        int count = 0;
-        while (count < xmlIDs.size()) {
-            for (int i = 0; i < numThread; i++) {
-                ParserWorker worker = new ParserWorker(xmlIDs.get(count), xmlDirPath, id2ASTModules);
-                Thread thread = new Thread(worker);
-                processXMLParsingDivideHelper(threads, thread);
-                thread.start();
-                count++;
-            }
-        }
-        for (int i = 0; i < numThread; i++) {
-            try {
-                threads[i].join();
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        }
-    }
+        int xmlIDsSize = xmlIDs.size();
+        int iDPerThread = xmlIDsSize / numThread;
+        int remainder = xmlIDsSize % numThread;
+        List<Thread> threads = new ArrayList<>(numThread);
 
-    /***
-     * A helper which finds a space in threads for a new thread to be inserted
-     * @param threads the threads array
-     * @param thread the new thread to be inserted
-     */
-    private void processXMLParsingDivideHelper(Thread[] threads, Thread thread) {
-        while (true) {
-            for (int i = 0; i < threads.length; i++) {
-                if (threads[i] == null || !threads[i].isAlive()) {
-                    threads[i] = thread;
-                    return;
-                }
+        for (int i = 0; i < numThread; i++) {
+            int startIdx = i * iDPerThread;
+            int endIdx = startIdx + iDPerThread;
+            if (i == numThread - 1) {
+                endIdx += remainder;
             }
+            List<String> list = xmlIDs.subList(startIdx, endIdx);
+            Thread thread = new Thread(() -> {
+                list.forEach(id -> new ParserWorker(id, xmlDirPath, id2ASTModules).run());
+            });
+            threads.add(thread);
+            thread.start();
         }
+        joinAll(threads);
     }
 
 
