@@ -4,6 +4,7 @@ import hk.ust.comp3021.query.*;
 import hk.ust.comp3021.utils.*;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class QueryWorker implements Runnable {
     public HashMap<String, ASTModule> id2ASTModules;
@@ -164,29 +165,33 @@ public class QueryWorker implements Runnable {
         ArrayList<Object> res = new ArrayList<>();
         workers.forEach(worker -> res.add(worker.getResult()));
         if ("findFuncWithArgGtN".equals(queryName)) {
-            result = res;
+            result = workers.stream().map(QueryWorker::getResult)
+                    .filter(list -> !((List<String>) list).isEmpty())
+                    .flatMap(list -> ((List<String>) list).stream())
+                    .collect(Collectors.toList());
         }
         if ("calculateOp2Nums".equals(queryName)) {
-            HashMap<String, Integer> allMaps = new HashMap<>();
-            res.stream().map(m -> (HashMap<String, Integer>) m)
-                    .forEach(map ->
-                            map.forEach((key, value) ->
-                                    allMaps.put(key, allMaps.getOrDefault(key, 0) + value)));
-            result = allMaps;
+            result = workers.stream()
+                    .map(QueryWorker::getResult)
+                    .flatMap(result -> ((HashMap<String, Integer>) result).entrySet().stream())
+                    .collect(HashMap<String, Integer>::new,
+                            (m, e) -> m.merge(e.getKey(), e.getValue(), Integer::sum),
+                            Map::putAll);
         }
         if ("calculateNode2Nums".equals(queryName)) {
-            Map<String, Long> allMaps = new HashMap<>();
-            res.stream().map(m -> (HashMap<String, Long>) m)
-                    .forEach(map ->
-                            map.forEach((key, value) ->
-                                    allMaps.put(key, allMaps.getOrDefault(key, 0L) + value)));
-            result = allMaps;
+            result = workers.stream()
+                    .map(QueryWorker::getResult)
+                    .flatMap(result -> ((HashMap<String, Long>) result).entrySet().stream())
+                    .collect(HashMap<String, Long>::new,
+                            (m, e) -> m.merge(e.getKey(), e.getValue(), Long::sum),
+                            Map::putAll);
         }
         if ("processNodeFreq".equals(queryName)) {
-            List<Map.Entry<String, Integer>> list = new ArrayList<>();
-            res.forEach(l -> list.addAll((List<Map.Entry<String, Integer>>) l));
-            list.sort(Map.Entry.<String, Integer>comparingByValue().reversed());
-            result = list;
+            result = workers.stream()
+                    .map(QueryWorker::getResult)
+                    .flatMap(list -> ((List<Map.Entry<String, Integer>>) list).stream())
+                    .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+                    .toList();
         } /* sort */
     }
 
@@ -212,9 +217,9 @@ public class QueryWorker implements Runnable {
             }
             String key1 = astID + queryName;
             prerequisites.put(key1, prerequisites.get(key1) - 1);
-            if (queryName.equals("findSuperClasses")){
+            if (queryName.equals("findSuperClasses")) {
                 String key2 = key1 + args[0].toString();
-                prerequisites.put(key2, prerequisites.get(key2) -1);
+                prerequisites.put(key2, prerequisites.get(key2) - 1);
             }
             runSerial();
             prerequisites.notifyAll();
