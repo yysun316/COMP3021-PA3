@@ -15,18 +15,18 @@ public class QueryWorker implements Runnable {
     private Object result;
 
     /* Lists storing the name of functions in the query classes */
-    public static final ArrayList<String> QUERY_METHODS;
-    public static final ArrayList<String> QUERY_CLASSES;
-    public static final ArrayList<String> QUERY_NODES;
+    public static final HashSet<String> QUERY_METHODS;
+    public static final HashSet<String> QUERY_CLASSES;
+    public static final HashSet<String> QUERY_NODES;
 
     static {
-        QUERY_METHODS = new ArrayList<>(Arrays.asList(
+        QUERY_METHODS = new HashSet<>(Arrays.asList(
                 "findEqualCompareInFunc", "findFuncWithBoolParam", "findUnusedParamInFunc",
                 "findDirectCalledOtherB", "answerIfACalledB"));
-        QUERY_CLASSES = new ArrayList<>(Arrays.asList(
+        QUERY_CLASSES = new HashSet<>(Arrays.asList(
                 "findSuperClasses", "haveSuperClass", "findOverridingMethods",
                 "findAllMethods", "findClassesWithMain"));
-        QUERY_NODES = new ArrayList<>(Arrays.asList(
+        QUERY_NODES = new HashSet<>(Arrays.asList(
                 "findFuncWithArgGtN", "calculateOp2Nums",
                 "calculateNode2Nums", "processNodeFreq"));
     }
