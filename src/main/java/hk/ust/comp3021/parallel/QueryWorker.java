@@ -162,8 +162,6 @@ public class QueryWorker implements Runnable {
 
     @SuppressWarnings("unchecked")
     private void getResult(ArrayList<QueryWorker> workers) {
-        ArrayList<Object> res = new ArrayList<>();
-        workers.forEach(worker -> res.add(worker.getResult()));
         if ("findFuncWithArgGtN".equals(queryName)) {
             result = workers.stream().map(QueryWorker::getResult)
                     .filter(list -> !((List<String>) list).isEmpty())
