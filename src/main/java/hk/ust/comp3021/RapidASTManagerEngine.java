@@ -5,8 +5,6 @@ import hk.ust.comp3021.utils.*;
 
 import java.util.concurrent.*;
 import java.util.*;
-import java.util.concurrent.locks.ReentrantLock;
-import java.util.stream.Collectors;
 
 
 public class RapidASTManagerEngine {
@@ -201,131 +199,121 @@ public class RapidASTManagerEngine {
      */
     public List<Object> processCommandsInterLeaved(List<Object[]> commands) {
         Set<String> processedIds = new HashSet<>(); /* Storing the processed astIDs */
-        List<Object[]> loadCommands = new ArrayList<>();
-        List<Object[]> queryCommands = new ArrayList<>();
+        HashMap<String, Object[]> loadCommands = new HashMap<>();
+        HashMap<String, List<Object[]>> nonNodeCommands = new HashMap<>();
+        ArrayList<Object[]> nodeCommands = new ArrayList<>();
         /* Separate the commands into 2 categories: load , query */
-        for (Object[] command : commands) {
-            if (command[2].equals("processXMLParsing")) {
-                loadCommands.add(command);
-            } else {
-                queryCommands.add(command);
+        classifyCommands(commands, loadCommands, nonNodeCommands, nodeCommands);
+        /* Remove all commands without load */
+        nonNodeCommands.entrySet().removeIf(entry -> !loadCommands.containsKey(entry.getKey()));
+        nodeCommands.removeIf(x -> !loadCommands.containsKey((String) x[1]));
+        /* Start running node commands if processedIds.size() == loadCommands.size() */
+        ArrayList<Thread> threads = new ArrayList<>();
+        loadCommands.values().forEach(command -> {
+            Thread thread = new Thread(() -> {
+                getParserWorker(command).run();
+                synchronized (processedIds) {
+                    processedIds.add((String) command[1]);
+                    processedIds.notifyAll();
+                }
+            });
+            threads.add(thread);
+            thread.start();
+        });
+
+        ArrayList<QueryWorker> queryWorkers = new ArrayList<>(); /* For get result */
+        nonNodeCommands.forEach((astID, commandList) -> {
+            Thread thread = new Thread(() -> {
+                synchronized (processedIds) {
+                    while (!processedIds.contains(astID)) {
+                        try {
+                            processedIds.wait();
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                }
+                commandList.forEach(command -> {
+                    QueryWorker worker = getQueryWorker(command, 1);
+                    synchronized (queryWorkers) {
+                        queryWorkers.add(worker);
+                    }
+                    worker.run();
+                });
+            });
+            threads.add(thread);
+            thread.start();
+        });
+
+        synchronized (processedIds) {
+            while (!(processedIds.size() == loadCommands.size())) {
+                try {
+                    processedIds.wait();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
             }
+            nodeCommands.forEach(command -> {
+                Thread thread = new Thread(() -> {
+                    QueryWorker worker = getQueryWorker(command, 1);
+                    synchronized (queryWorkers) {
+                        queryWorkers.add(worker);
+                    }
+                    worker.run();
+                });
+                threads.add(thread);
+                thread.start();
+            });
         }
+        joinAll(threads);
+        return collectResult(queryWorkers, commands.size());
+    }
 
-        Thread loadThread = new Thread(() -> loadUnlimitedHelper(loadCommands, processedIds));
-        loadThread.start();
-
-
-        Thread queryThread = new Thread(() ->
-                allResults.addAll(queryUnlimitedHelper(queryCommands, processedIds, commands.size())));
-        queryThread.start();
-
-        try {
-            loadThread.join();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+    private List<Object> collectResult(ArrayList<QueryWorker> queryWorkers, int size) {
+        for (QueryWorker queryWorker : queryWorkers) {
+            System.out.println(queryWorker.queryName + queryWorker.queryID);
         }
-        try {
-            queryThread.join();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-        finishedProcessing = false;
+        Object[] result = new Object[size];
+        queryWorkers.forEach(worker -> {
+            int idx = Integer.parseInt(worker.queryID) - 1;
+            result[idx] = worker.getResult();
+            System.out.println(worker.getResult());
+        });
+        allResults.addAll(Arrays.stream(result).filter(Objects::nonNull).toList());
+//        allResults.forEach(System.out::println);
         return allResults;
     }
 
-    private void loadUnlimitedHelper(List<Object[]> loadCommands, Set<String> processedIds) {
-        int loadCount = 0;
-        ArrayList<Thread> threads = new ArrayList<>();
-        ArrayList<ParserWorker> parserWorkers = new ArrayList<>();
-
-        /* Submit jobs */
-        while (loadCount < loadCommands.size()) {
-            // command id, ast id, command name, command args
-            Object[] loadCommand = loadCommands.get(loadCount);
-            String xmlID = (String) loadCommand[1];
-            String xmlDirPath = (String) (((Object[]) loadCommand[3])[0]);
-            ParserWorker parserWorker = new ParserWorker(xmlID, xmlDirPath, id2ASTModules);
-            Thread thread = new Thread(parserWorker);
-            thread.start();
-            threads.add(thread);
-            parserWorkers.add(parserWorker);
-            loadCount++;
-        }
-
-        /* Get all the processedIds*/
-        for (int i = 0; i < threads.size(); i++) {
-            try {
-                threads.get(i).join();
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-            LOCK.lock();
-            processedIds.add(parserWorkers.get(i).getXmlID());
-            LOCK.unlock();
-        }
-        /* finished processing, no more update will be done*/
-        LOCK.lock();
-        finishedProcessing = true;
-        LOCK.unlock();
+    private ParserWorker getParserWorker(Object[] command) {
+        // command id, ast id, command name, command args
+        return new ParserWorker((String) command[1], (String) (((Object[]) command[3])[0]), id2ASTModules);
     }
 
-    private List<Object> queryUnlimitedHelper(List<Object[]> queryCommands, Set<String> processedIds, int size) {
-        int queryCount = queryCommands.size();
-        QueryWorker[] queryWorkers = new QueryWorker[size];
-        ArrayList<Thread> threads = new ArrayList<>();
+    private QueryWorker getQueryWorker(Object[] queryCommand, int mode) {
+        // query id, ast id, query name, query args
+        String queryId = (String) queryCommand[0];
+        String astId = (String) queryCommand[1];
+        String queryName = (String) queryCommand[2];
+        Object[] args = (Object[]) queryCommand[3];
+        return new QueryWorker(id2ASTModules, queryId, astId, queryName, args, mode);
+    }
 
-        while (queryCount > 0 && !finishedProcessing) {
+    private static void classifyCommands(List<Object[]> commands, HashMap<String, Object[]> loadCommands,
+                                         HashMap<String, List<Object[]>> nonNodeCommands,
+                                         ArrayList<Object[]> nodeCommands) {
+        for (Object[] command : commands) {
+            // command id, ast id, command name, command args
             // query id, ast id, query name, query args
-            Iterator<Object[]> iterator = queryCommands.iterator();
-            while (iterator.hasNext()) {
-                Object[] queryCommand = iterator.next();
-                String astId = (String) queryCommand[1];
-                LOCK.lock();
-                if (processedIds.contains(astId)) {
-                    String queryId = (String) queryCommand[0];
-                    String queryName = (String) queryCommand[2];
-                    Object[] args = (Object[]) queryCommand[3];
-                    QueryWorker worker = new QueryWorker(id2ASTModules, queryId,
-                            astId, queryName, args, 1);
-                    Thread thread = new Thread(worker);
-                    thread.start();
-                    threads.add(thread);
-                    queryWorkers[Integer.parseInt(queryId) - 1] = worker; /* QueryWorkers at their query ID */
-                    iterator.remove(); /* Be careful */
-                    queryCount--;
-                }
-                LOCK.unlock();
+            String astId = command[1].toString();
+            String commandName = command[2].toString();
+            if (commandName.equals("processXMLParsing")) {
+                loadCommands.put(astId, command);
+            } else if (QueryWorker.QUERY_NODES.contains(commandName)) {
+                nodeCommands.add(command);
+            } else {
+                nonNodeCommands.computeIfAbsent(astId, k -> new ArrayList<>()).add(command);
             }
         }
-        /* Check it one more time to ensure all the commands are processed */
-        Iterator<Object[]> iterator = queryCommands.iterator();
-        while (iterator.hasNext()) {
-            Object[] queryCommand = iterator.next();
-            String astId = (String) queryCommand[1];
-            LOCK.lock();
-            if (processedIds.contains(astId)) {
-                String queryId = (String) queryCommand[0];
-                String queryName = (String) queryCommand[2];
-                Object[] args = (Object[]) queryCommand[3];
-                QueryWorker worker = new QueryWorker(id2ASTModules, queryId, astId, queryName, args, 1);
-                Thread thread = new Thread(worker);
-                thread.start();
-                threads.add(thread);
-                queryWorkers[Integer.parseInt(queryId) - 1] = worker; /* QueryWorkers at their query ID */
-                iterator.remove(); /* Be careful */
-                queryCount--;
-            }
-            LOCK.unlock();
-        }
-
-        joinAll(threads);
-
-        /* Retrieve result */
-        return Arrays.stream(queryWorkers).
-                filter(Objects::nonNull).
-                map(QueryWorker::getResult).
-                collect(Collectors.toList());
     }
 
     /**
@@ -346,21 +334,20 @@ public class RapidASTManagerEngine {
      */
     public List<Object> processCommandsInterLeavedTwoThread(List<Object[]> commands) {
         Set<String> processedIds = new HashSet<>(); /* Storing the processed astIDs */
-        List<Object[]> loadCommands = new ArrayList<>();
-        List<Object[]> queryCommands = new ArrayList<>();
+        HashMap<String, Object[]> loadCommands = new HashMap<>();
+        HashMap<String, List<Object[]>> nonNodeCommands = new HashMap<>();
+        ArrayList<Object[]> nodeCommands = new ArrayList<>();
         /* Separate the commands into 2 categories: load , query */
-        for (Object[] command : commands) {
-            if (command[2].equals("processXMLParsing")) {
-                loadCommands.add(command);
-            } else {
-                queryCommands.add(command);
-            }
-        }
+        classifyCommands(commands, loadCommands, nonNodeCommands, nodeCommands);
+        /* Remove all commands without load */
+        nonNodeCommands.entrySet().removeIf(entry -> !loadCommands.containsKey(entry.getKey()));
+        nodeCommands.removeIf(x -> !loadCommands.containsKey((String) x[1]));
 
         Thread loadThread = new Thread(() -> loadHelper(loadCommands, processedIds));
         loadThread.start();
+
         Thread queryThread = new Thread(() ->
-                allResults.addAll(queryHelper(queryCommands, processedIds, commands.size())));
+                queryHelper(nonNodeCommands, nodeCommands, processedIds, loadCommands, commands));
         queryThread.start();
         try {
             loadThread.join();
@@ -372,90 +359,59 @@ public class RapidASTManagerEngine {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
-        finishedProcessing = false;
+        System.out.println(allResults);
         return allResults;
     }
 
-    private volatile boolean finishedProcessing = false;
-    private static final ReentrantLock LOCK = new ReentrantLock();
 
-    private List<Object> queryHelper(List<Object[]> queryCommands, Set<String> processedIds, int size) {
-        int queryCount = queryCommands.size();
-        QueryWorker[] queryWorkers = new QueryWorker[size];
-        while (queryCount > 0 && !finishedProcessing) {
-            // query id, ast id, query name, query args
-            Iterator<Object[]> iterator = queryCommands.iterator();
-            while (iterator.hasNext()) {
-                Object[] queryCommand = iterator.next();
-                String astId = (String) queryCommand[1];
-                LOCK.lock();
-                if (processedIds.contains(astId)) {
-                    String queryId = (String) queryCommand[0];
-                    String queryName = (String) queryCommand[2];
-                    Object[] args = (Object[]) queryCommand[3];
-                    QueryWorker worker = new QueryWorker(id2ASTModules, queryId, astId, queryName, args, 0);
-                    worker.run();
-                    queryWorkers[Integer.parseInt(queryId) - 1] = worker; /* QueryWorkers at their query ID */
-                    iterator.remove(); /* Be careful */
-                    queryCount--;
+    private List<Object> queryHelper(HashMap<String, List<Object[]>> nonNodeCommands,
+                                     ArrayList<Object[]> nodeCommands,
+                                     Set<String> processedIds,
+                                     HashMap<String, Object[]> loadCommands,
+                                     List<Object[]> commands) {
+        ArrayList<QueryWorker> queryWorkers = new ArrayList<>();
+        nonNodeCommands.forEach((astID, commandList) -> {
+            synchronized (processedIds) {
+                while (!processedIds.contains(astID)) {
+                    try {
+                        processedIds.wait();
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
-                LOCK.unlock();
             }
-        }
-        /* Check it one more time to ensure all the commands are processed */
-        Iterator<Object[]> iterator = queryCommands.iterator();
-        while (iterator.hasNext()) {
-            Object[] queryCommand = iterator.next();
-            String astId = (String) queryCommand[1];
-            LOCK.lock();
-            if (processedIds.contains(astId)) {
-                String queryId = (String) queryCommand[0];
-                String queryName = (String) queryCommand[2];
-                Object[] args = (Object[]) queryCommand[3];
-                QueryWorker worker = new QueryWorker(id2ASTModules, queryId, astId, queryName, args, 0);
+            commandList.forEach(command -> {
+                QueryWorker worker = getQueryWorker(command, 0);
+                queryWorkers.add(worker);
                 worker.run();
-                queryWorkers[Integer.parseInt(queryId) - 1] = worker; /* QueryWorkers at their query ID */
-                iterator.remove(); /* Be careful */
-                queryCount--;
+            });
+        });
+        synchronized (processedIds) {
+            while (!(processedIds.size() == loadCommands.size())) {
+                try {
+                    processedIds.wait();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
             }
-            LOCK.unlock();
+            nodeCommands.forEach(command -> {
+                QueryWorker worker = getQueryWorker(command, 0);
+                queryWorkers.add(worker);
+                worker.run();
+            });
         }
-        /* Retrieve result */
-        return Arrays.stream(queryWorkers).
-                filter(Objects::nonNull).
-                map(QueryWorker::getResult).
-                collect(Collectors.toList());
+        return collectResult(queryWorkers, commands.size());
     }
 
-    private void loadHelper(List<Object[]> loadCommands, Set<String> processedIds) {
-        int loadCount = 0;
-        ParserWorker parserWorker = null;
-        while (loadCount < loadCommands.size()) {
-            if (parserWorker != null) { /* Finish parsing and we can execute its query for this id */
-                LOCK.lock();
-                processedIds.add(parserWorker.getXmlID());
-                LOCK.unlock();
+    private void loadHelper(HashMap<String, Object[]> loadCommands, Set<String> processedIds) {
+        loadCommands.values().forEach(command -> {
+            getParserWorker(command).run();
+            synchronized (processedIds) {
+                processedIds.add((String) command[1]);
+                processedIds.notifyAll();
             }
-            // command id, ast id, command name, command args
-            Object[] loadCommand = loadCommands.get(loadCount);
-            String xmlID = (String) loadCommand[1];
-            String xmlDirPath = (String) (((Object[]) loadCommand[3])[0]);
-            parserWorker = new ParserWorker(xmlID, xmlDirPath, id2ASTModules);
-            parserWorker.run(); /* only two threads */
-            loadCount++;
-        }
-
-        if (parserWorker != null) {
-            LOCK.lock();
-            processedIds.add(parserWorker.getXmlID());
-            LOCK.unlock();
-        }
-        /* finished processing, no more update will be done*/
-        LOCK.lock();
-        finishedProcessing = true;
-        LOCK.unlock();
+        });
     }
-
 
     /**
      * TODO: (Bonus) Implement `processCommandsInterLeavedTwoThread` to handle a list of commands
@@ -475,51 +431,70 @@ public class RapidASTManagerEngine {
     public List<Object> processCommandsInterLeavedFixedThread(List<Object[]> commands, int numThread) {
         // TODO: Bonus: interleaved parsing and query with given number of threads
         // TODO: separate parser tasks and query tasks with the goal of efficiency
-        // Separate the commands into load and query commands
-        Map<String, Object[]> loadCommands = new HashMap<>();
-        Map<String, List<Object[]>> queryCommands = new HashMap<>();
-        for (Object[] command : commands) {
-            if (command[2].equals("processXMLParsing")) {
-                loadCommands.put((String) command[1], command);
-            } else {
-                queryCommands.computeIfAbsent((String) command[1], k -> new ArrayList<>()).add(command);
-            }
-        }
+        Set<String> processedIds = new HashSet<>(); /* Storing the processed astIDs */
+        HashMap<String, Object[]> loadCommands = new HashMap<>();
+        HashMap<String, List<Object[]>> nonNodeCommands = new HashMap<>();
+        ArrayList<Object[]> nodeCommands = new ArrayList<>();
+        /* Separate the commands into 2 categories: load , query */
+        classifyCommands(commands, loadCommands, nonNodeCommands, nodeCommands);
+        /* Remove all commands without load */
+        nonNodeCommands.entrySet().removeIf(entry -> !loadCommands.containsKey(entry.getKey()));
+        nodeCommands.removeIf(x -> !loadCommands.containsKey((String) x[1]));
 
         /* Create a fixed thread pool*/
         ExecutorService executor = Executors.newFixedThreadPool(numThread);
 
         /* Submit the load commands to the thread pool and store the Future objects */
-        Map<String, Future<?>> loadFutures = new HashMap<>();
-        for (Map.Entry<String, Object[]> entry : loadCommands.entrySet()) {
-            String xmlID = (String) entry.getValue()[1];
-            String xmlDirPath = (String) (((Object[]) entry.getValue()[3])[0]);
-            ParserWorker parserWorker = new ParserWorker(xmlID, xmlDirPath, id2ASTModules);
-            Future<?> future = executor.submit(parserWorker);
-            loadFutures.put(entry.getKey(), future);
-        }
+        loadCommands.values().forEach(command -> {
+            executor.submit(() -> {
+                getParserWorker(command).run();
+                synchronized (processedIds) {
+                    processedIds.add((String) command[1]);
+                    processedIds.notifyAll();
+                }
+            });
+        });
 
         /* Wait for the load commands to finish and then submit the corresponding query commands */
-        Map<QueryWorker, Future<Object>> futureTasks = new HashMap<>();
-        int countDone = 0;
-        while (countDone < loadFutures.size()) {
-            for (Map.Entry<String, List<Object[]>> entry : queryCommands.entrySet()) {
-                if (entry.getValue() == null)
-                    continue;
-                Future<?> loadFuture = loadFutures.get(entry.getKey());
-                if (loadFuture.isDone()) {
-                    for (Object[] queryCommand : entry.getValue()) {
-                        String queryId = (String) queryCommand[0];
-                        String queryName = (String) queryCommand[2];
-                        Object[] args = (Object[]) queryCommand[3];
-                        QueryWorker queryWorker = new QueryWorker(id2ASTModules, queryId, entry.getKey(),
-                                queryName, args, 0);
-                        futureTasks.put(queryWorker, (Future<Object>) executor.submit(queryWorker));
+        ArrayList<QueryWorker> queryWorkers = new ArrayList<>(); /* For get result */
+        nonNodeCommands.forEach((astID, commandList) -> {
+            executor.submit(() -> {
+                synchronized (processedIds) {
+                    while (!processedIds.contains(astID)) {
+                        try {
+                            processedIds.wait();
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
                     }
-                    queryCommands.put(entry.getKey(), null);
-                    countDone++;
+                }
+                commandList.forEach(command -> {
+                    QueryWorker worker = getQueryWorker(command, 0);
+                    synchronized (queryWorkers) {
+                        queryWorkers.add(worker);
+                    }
+                    worker.run();
+                });
+            });
+        });
+
+        synchronized (processedIds) {
+            while (!(processedIds.size() == loadCommands.size())) {
+                try {
+                    processedIds.wait();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
                 }
             }
+            nodeCommands.forEach(command -> {
+                executor.submit(() -> {
+                    QueryWorker worker = getQueryWorker(command, 0);
+                    synchronized (queryWorkers) {
+                        queryWorkers.add(worker);
+                    }
+                    worker.run();
+                });
+            });
         }
         /* Shutdown the executor and wait for all tasks to finish */
         executor.shutdown();
@@ -528,18 +503,6 @@ public class RapidASTManagerEngine {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
-        Object[] results = new Object[commands.size()];
-        for (Map.Entry<QueryWorker, Future<Object>> futureEntry : futureTasks.entrySet()) {
-            try {
-                futureEntry.getValue().get(); // wait
-                Object o = futureEntry.getKey().getResult();
-                int pos = Integer.parseInt(futureEntry.getKey().queryID) - 1;
-                results[pos] = o;
-            } catch (InterruptedException | ExecutionException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        allResults.addAll(Arrays.stream(results).filter(Objects::nonNull).toList());
-        return allResults;
+        return collectResult(queryWorkers, commands.size());
     }
 }
