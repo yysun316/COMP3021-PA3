@@ -39,10 +39,7 @@ public class ParserWorker implements Runnable {
             synchronized (id2ASTModules) {
                 id2ASTModules.put(xmlID, parser.getASTModule());
             }
-            System.out.println("AST " + xmlID + " Succeed! The XML file is loaded!");
-        } else {
-            System.out.println("AST " + xmlID + " Failed! Please check your implementation!");
-
+//            System.out.println("AST " + xmlID + " Succeed! The XML file is loaded!");
         }
     }
 }

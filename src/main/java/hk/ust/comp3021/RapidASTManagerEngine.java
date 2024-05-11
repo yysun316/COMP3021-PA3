@@ -270,17 +270,12 @@ public class RapidASTManagerEngine {
     }
 
     private List<Object> collectResult(ArrayList<QueryWorker> queryWorkers, int size) {
-        for (QueryWorker queryWorker : queryWorkers) {
-            System.out.println(queryWorker.queryName + queryWorker.queryID);
-        }
         Object[] result = new Object[size];
         queryWorkers.forEach(worker -> {
             int idx = Integer.parseInt(worker.queryID) - 1;
             result[idx] = worker.getResult();
-            System.out.println(worker.getResult());
         });
         allResults.addAll(Arrays.stream(result).filter(Objects::nonNull).toList());
-//        allResults.forEach(System.out::println);
         return allResults;
     }
 
@@ -359,7 +354,6 @@ public class RapidASTManagerEngine {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
-        System.out.println(allResults);
         return allResults;
     }
 
